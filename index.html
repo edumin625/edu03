@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 OPERATION: DOKDO - 독도 방탈출</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        
+        /* 흔들림 애니메이션 (틀렸을 때) */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .shake-animation {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+
+        /* 약간의 사이버펑크(?) CRT 느낌 오버레이 */
+        .crt-overlay {
+            pointer-events: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+            z-index: 50;
+            opacity: 0.15;
+        }
+
+        /* 스크롤바 커스텀 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 selection:bg-blue-500/30">
+    <div class="crt-overlay hidden sm:block"></div>
+
+    <div class="max-w-2xl w-full bg-slate-800 rounded-xl shadow-2xl overflow-hidden border border-slate-700 relative z-10">
+        
+        <!-- 상단 헤더 -->
+        <div class="bg-slate-950 p-4 border-b border-slate-700 flex justify-between items-center">
+            <div class="flex items-center space-x-2 text-blue-400 font-black">
+                <span>🇰🇷</span>
+                <h1 class="tracking-widest text-sm sm:text-base">OPERATION: DOKDO</h1>
+            </div>
+            <button id="btn-open-dict" class="hidden flex items-center space-x-1 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-sm font-bold transition-transform transform hover:scale-105 shadow-lg shadow-blue-900/40">
+                <span>📖 1급 비밀 문서(사전) 열람</span>
+            </button>
+        </div>
+
+        <!-- 1. 인트로 화면 -->
+        <div id="screen-intro" class="p-8 sm:p-12 text-center space-y-6">
+            <div class="mx-auto text-6xl mb-6 animate-bounce">🕵️‍♂️</div>
+            <h2 class="text-3xl font-black text-white tracking-tight">독도 역사 수호대 🚨</h2>
+            <p class="text-slate-300 leading-relaxed max-w-md mx-auto text-lg">
+                헐... 요원님 큰일났음 ㄷㄷ<br/>
+                누군가 독도의 역사가 담긴 킹갓 귀중한 자료를<br/>
+                비밀 금고에 꽁꽁 숨겨버렸음! 😱<br/><br/>
+                우측 상단의 <strong class="text-blue-400">'비밀 문서'</strong>를 참고해서<br/>
+                4개의 방에 걸려있는 암호를 풀고 진실을 되찾아줘! 너만 믿는다! 😎
+            </p>
+            <button onclick="startGame()" class="mt-8 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 px-10 rounded-xl text-xl transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(37,99,235,0.6)]">
+                🚀 작전 시작하기
+            </button>
+        </div>
+
+        <!-- 2. 게임 플레이 화면 -->
+        <div id="screen-game" class="hidden p-6 sm:p-10">
+            <!-- 진행도 -->
+            <div class="flex justify-between items-center mb-8">
+                <div id="progress-bar-container" class="flex space-x-2">
+                    <!-- JS로 채워짐 -->
+                </div>
+                <span id="stage-counter" class="text-sm font-mono text-slate-400 font-bold">STAGE 1 / 4</span>
+            </div>
+
+            <!-- 현재 스테이지 컨텐츠 -->
+            <div class="space-y-6 bg-slate-900/70 p-6 rounded-xl border border-slate-700/50 shadow-inner">
+                <div class="flex items-center space-x-3 text-blue-400 mb-2">
+                    <span id="stage-icon" class="text-3xl">🔒</span>
+                    <h3 id="stage-title" class="text-xl font-black"></h3>
+                </div>
+                
+                <p id="stage-story" class="text-slate-300 leading-relaxed font-medium border-l-4 border-blue-500 pl-4 py-1 bg-slate-800/50 rounded-r">
+                </p>
+                
+                <div class="bg-blue-900/30 p-5 rounded-lg border border-blue-500/30 text-blue-100 font-bold text-lg">
+                    <span class="text-yellow-400 mr-2">Q.</span><span id="stage-question"></span>
+                </div>
+
+                <div id="hint-box" class="hidden text-yellow-400 text-sm font-bold flex items-center space-x-1 animate-pulse bg-yellow-900/20 p-2 rounded">
+                    <span>💡 요원 시스템 힌트: </span><span id="stage-hint"></span>
+                </div>
+
+                <form id="answer-form" class="mt-6">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input
+                            type="text"
+                            id="answer-input"
+                            placeholder="👉 정답을 입력해! (띄어쓰기 무시 가능)"
+                            class="flex-1 bg-slate-950 border border-slate-600 focus:border-blue-500 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-bold text-lg placeholder:text-slate-600 placeholder:text-sm placeholder:font-normal"
+                            autocomplete="off"
+                        />
+                        <button type="submit" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-3 rounded-lg font-black transition-colors shadow-lg active:scale-95">
+                            입력 뽜이어! 🔥
+                        </button>
+                    </div>
+                    <p id="error-msg" class="hidden text-red-400 text-sm mt-2 font-bold animate-pulse">❌ 삐빅- 접근 거부! 암호가 틀렸어 ㅠㅠ 다시 확인해봐!</p>
+                </form>
+
+                <div class="text-center mt-4">
+                    <button id="btn-show-hint" onclick="showHint()" class="text-slate-400 hover:text-yellow-400 text-sm font-bold underline transition-colors">
+                        🙏 도저히 모르겠음... 힌트 좀 주세요
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 아웃트로 화면 -->
+        <div id="screen-outro" class="hidden p-8 sm:p-12 text-center space-y-6">
+            <div class="mx-auto text-7xl mb-6 drop-shadow-[0_0_30px_rgba(34,197,94,0.6)]">🎉</div>
+            <h2 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 tracking-tight">작전 대성공! 폼 미쳤다!</h2>
+            <p class="text-slate-300 leading-relaxed max-w-md mx-auto text-lg font-medium">
+                크으~ 요원님 추리력 찢었다! 👍<br/>
+                성공적으로 금고를 열고 독도의 역사를 지켜냈음!<br/>
+                우리가 똑똑히 기억하는 한, 독도는 영원히 우리 땅! 🇰🇷
+            </p>
+            
+            <div class="mt-8 bg-slate-900/80 p-6 rounded-xl text-left inline-block w-full max-w-md border border-slate-700 shadow-inner">
+                <h3 class="text-blue-400 font-black mb-4 flex items-center text-lg">🎖️ 당신이 수집한 핵심 증거 요약</h3>
+                <ul class="text-base space-y-3 text-slate-300 font-medium">
+                    <li>🚢 1849년: 서양에 알려진 명칭 <strong class="text-white bg-blue-900/50 px-1 rounded">리앙쿠르암</strong></li>
+                    <li>🇯🇵 1877년: 일본 스스로 인정한 <strong class="text-white bg-blue-900/50 px-1 rounded">태정관 지령</strong></li>
+                    <li>🎣 숙종 때: 우리 땅을 지켜낸 킹갓 어부 <strong class="text-white bg-blue-900/50 px-1 rounded">안용복</strong></li>
+                    <li>📜 1946년: 일본 통치권 제외 명령 <strong class="text-white bg-blue-900/50 px-1 rounded">SCAPIN 제677호</strong></li>
+                </ul>
+            </div>
+
+            <button onclick="resetGame()" class="mt-8 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-8 rounded-lg transition-colors hover:scale-105">
+                🔄 한 판 더 할까?
+            </button>
+        </div>
+
+        <!-- 4. 비밀 사전 모달창 -->
+        <div id="dict-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
+            <div class="bg-slate-800 w-full max-w-3xl max-h-[85vh] rounded-2xl shadow-2xl border-2 border-blue-500/50 flex flex-col transform transition-transform scale-100">
+                <!-- 모달 헤더 -->
+                <div class="bg-slate-900 p-4 border-b border-slate-700 flex justify-between items-center rounded-t-2xl">
+                    <h2 class="text-xl font-black text-blue-400 flex items-center">📖 1급 비밀: 독도 핵심 용어 사전</h2>
+                    <button onclick="toggleDict()" class="text-slate-400 hover:text-white transition-colors text-3xl leading-none px-2 font-black">&times;</button>
+                </div>
+                <!-- 모달 바디 (동적 생성) -->
+                <div id="dict-content" class="p-6 overflow-y-auto space-y-8 h-full">
+                    <!-- JS로 채워짐 -->
+                </div>
+                <!-- 모달 푸터 -->
+                <div class="bg-slate-900 p-4 border-t border-slate-700 rounded-b-2xl text-center">
+                    <button onclick="toggleDict()" class="bg-blue-600 hover:bg-blue-500 px-8 py-3 rounded-lg font-black text-white transition-colors shadow-lg active:scale-95">
+                        👌 확인 완료 (게임으로 빽)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로직 스크립트 -->
+    <script>
+        // 데이터: 독도 사전
+        const dictionaryData = [
+            {
+                category: "1. 명칭 관련 🏷️",
+                items: [
+                    { term: "우산도 (于山島)", desc: "삼국시대 우산국에서 유래한 독도의 옛 이름입니다." },
+                    { term: "석도 (石島)", desc: "1900년 대한제국 칙령 제41호에 등장! '돌섬(독섬)'을 한자로 표기한 것으로, 독도가 울릉군의 관할임을 팩트체크 해주는 증거입니다." },
+                    { term: "마쓰시마 (송도, 松島)", desc: "과거 일본이 독도를 부르던 명칭. 참고로 당시 일본은 울릉도를 '죽도(다케시마)'라고 불렀음 (헷갈리게 하네 ㅡㅡ;)" },
+                    { term: "리앙쿠르암 (Liancourt Rocks)", desc: "1849년 프랑스 포경선 리앙쿠르호가 독도를 발견하고 자기들 배 이름 따서 붙인 서양식 명칭!" }
+                ]
+            },
+            {
+                category: "2. 핵심 고문서 (빼박 증거) 📜",
+                items: [
+                    { term: "세종실록지리지 (1454)", desc: "독도(우산)와 울릉도(무릉)가 강원도 울진현 소속이며, 날 맑으면 두 섬이 서로 보인다고 기록된 조선의 공식 문서." },
+                    { term: "은주시청합기 (1667)", desc: "일본 옛날 문서인데, '울릉도랑 독도는 일본 영토 아님(조선 땅임)'이라고 지들 스스로 기록한 최초의 일본 문헌임 ㅋㅋㅋ" },
+                    { term: "태정관 지령 (1877)", desc: "일본 메이지 정부 짱(최고 행정기관)이 '울릉도와 독도는 일본과 관계없음 ㅇㅇ'라고 공식 지시내림. 일본 스스로 한국 땅 인정해버린 결정적 증거 타격감 100%!" },
+                    { term: "대한제국 칙령 제41호 (1900)", desc: "고종 황제가 독도(석도)를 울릉군의 관할로 땅땅땅! 명시해서 반포한 근대 법령." },
+                    { term: "시마네현 고시 제40호 (1905)", desc: "러일전쟁 중 일본이 뜬금없이 독도를 '주인 없는 땅'이라고 우기며 불법으로 지네 영토로 편입한 억지 고시." },
+                    { term: "SCAPIN 제677호 (1946)", desc: "제2차 세계대전 끝난 후 연합군 최고사령관이 '독도는 일본 통치권에서 아웃!' 이라고 명시한 지령." }
+                ]
+            },
+            {
+                category: "3. 인물 및 사건 🦸‍♂️",
+                items: [
+                    { term: "안용복", desc: "조선 숙종 때 레전드 어부. 국가 관리도 아닌데 일본 건너가서 '울릉도, 독도 우리 땅인데 왜 옴?' 따져서 막부로부터 '도해 금지령' 받아낸 상남자." },
+                    { term: "독도의용수비대", desc: "1950년대 한국전쟁 때 혼란을 틈타 일본이 침범하려 하자 홍순칠 등 민간인들이 스스로 뭉쳐서 총 들고 독도 지켜낸 수비대 ㅠㅠ (감동)" },
+                    { term: "평화선 (이승만 라인)", desc: "1952년 이승만 대통령이 바다에 선 딱 긋고 '여기 우리 구역임' 선언해서 독도 주권을 확실히 한 사건." },
+                    { term: "다케시마의 날", desc: "일본 시마네현이 1905년 지들이 불법 편입한 날을 기념한답시고 매년 2월 22일로 만든 어이없는 날. 혈압 주의 🤬" }
+                ]
+            }
+        ];
+
+        // 데이터: 게임 스테이지
+        const stages = [
+            {
+                title: "제 1구역: 낡은 항해 일지 🏴‍☠️",
+                story: "비밀 기지 첫 번째 문 앞. 낡은 서양식 항해 일지가 떨어져 있다. 누군가 독도를 서양에 처음 알렸던 기록 같은데...?",
+                question: "1849년, 프랑스 포경선이 독도를 발견하고 자기들 배 이름을 따서 붙인 서양식 이름은?!",
+                hint: "5글자 초성: ㄹㅇㅋㄹㅇ",
+                answers: ["리앙쿠르암"]
+            },
+            {
+                title: "제 2구역: 숨겨진 진실의 방 ⛩️",
+                story: "문을 열고 들어오니 옛날 일본 문서들이 가득하다. 그 중 유독 붉은 도장이 찍힌 문서 하나! 일본 최고 기관이 스스로 진실을 인정한 빼박 문서다!",
+                question: "1877년, 일본 최고 행정기관이 '울릉도와 독도는 일본과 관계없다'고 공식적으로 내린 지시의 이름은?!",
+                hint: "5글자 초성: ㅌㅈㄱㅈㄹ",
+                answers: ["태정관지령", "태정관 지령"]
+            },
+            {
+                title: "제 3구역: 영웅의 흔적 🌊",
+                story: "다음 방에는 패기 넘치는 한 어부의 동상이 있다. 관리도 군인도 아니었지만 바다를 건너가 일본 참교육을 시전한 킹갓제너럴...",
+                question: "조선 숙종 때 일본에 건너가 독도가 조선 땅임을 강력히 주장하여 '도해 금지령'을 받아낸 레전드 어부의 이름은?!",
+                hint: "3글자 사람 이름! ㅇㅇㅂ",
+                answers: ["안용복"]
+            },
+            {
+                title: "제 4구역: 최후의 금고 🔐",
+                story: "드디어 마지막 방! 거대한 금고에 '독도의 진실'이 담긴 USB가 있다. 열려면 3자리 숫자 비밀번호가 필요한데...",
+                question: "제2차 세계대전 후, 연합군 최고사령관이 '독도는 일본 통치권 제외!' 라고 명시한 지령은 'SCAPIN 제 OOO호' 이다. 빈칸 숫자는?!",
+                hint: "3자리 숫자!",
+                answers: ["677", "제677호", "677호"]
+            }
+        ];
+
+        let currentStage = 0;
+
+        // DOM 요소들
+        const screenIntro = document.getElementById('screen-intro');
+        const screenGame = document.getElementById('screen-game');
+        const screenOutro = document.getElementById('screen-outro');
+        const btnOpenDict = document.getElementById('btn-open-dict');
+        const dictModal = document.getElementById('dict-modal');
+        const answerForm = document.getElementById('answer-form');
+        const answerInput = document.getElementById('answer-input');
+        const errorMsg = document.getElementById('error-msg');
+        
+        // 정답 문자열 정규화 (띄어쓰기 싹 무시, 소문자)
+        const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
+
+        // 사전 데이터 렌더링
+        function renderDictionary() {
+            const dictContent = document.getElementById('dict-content');
+            let html = '';
+            dictionaryData.forEach(section => {
+                html += `
+                    <div>
+                        <h3 class="text-xl font-black text-yellow-400 mb-4 pb-2 border-b border-slate-700/50">${section.category}</h3>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                `;
+                section.items.forEach(item => {
+                    html += `
+                            <div class="bg-slate-900/80 p-5 rounded-lg border border-slate-700 hover:border-blue-500/50 transition-colors">
+                                <h4 class="font-black text-blue-300 mb-2 text-lg">${item.term}</h4>
+                                <p class="text-sm text-slate-300 leading-relaxed font-medium">${item.desc}</p>
+                            </div>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+            dictContent.innerHTML = html;
+        }
+
+        // 게임 시작
+        function startGame() {
+            screenIntro.classList.add('hidden');
+            screenGame.classList.remove('hidden');
+            btnOpenDict.classList.remove('hidden');
+            currentStage = 0;
+            loadStage();
+        }
+
+        // 스테이지 로딩
+        function loadStage() {
+            const stage = stages[currentStage];
+            
+            // 텍스트 업데이트
+            document.getElementById('stage-title').innerText = stage.title;
+            document.getElementById('stage-story').innerText = `"${stage.story}"`;
+            document.getElementById('stage-question').innerText = stage.question;
+            document.getElementById('stage-hint').innerText = stage.hint;
+            document.getElementById('stage-counter').innerText = `STAGE ${currentStage + 1} / ${stages.length}`;
+            
+            // 아이콘 변경 (마지막 스테이지는 자물쇠 채워진 모양)
+            document.getElementById('stage-icon').innerText = (currentStage === stages.length - 1) ? "🔐" : "🔓";
+
+            // UI 리셋
+            answerInput.value = '';
+            errorMsg.classList.add('hidden');
+            document.getElementById('hint-box').classList.add('hidden');
+            document.getElementById('btn-show-hint').classList.remove('hidden');
+            answerInput.classList.remove('shake-animation');
+            answerInput.focus();
+
+            // 프로그레스 바 업데이트
+            const progressContainer = document.getElementById('progress-bar-container');
+            let dotsHtml = '';
+            for(let i=0; i<stages.length; i++) {
+                if (i < currentStage) {
+                    dotsHtml += `<div class="h-3 w-10 sm:w-14 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] transition-all"></div>`;
+                } else if (i === currentStage) {
+                    dotsHtml += `<div class="h-3 w-10 sm:w-14 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(37,99,235,0.9)] animate-pulse transition-all"></div>`;
+                } else {
+                    dotsHtml += `<div class="h-3 w-10 sm:w-14 rounded-full bg-slate-700 transition-all"></div>`;
+                }
+            }
+            progressContainer.innerHTML = dotsHtml;
+        }
+
+        // 힌트 보기
+        function showHint() {
+            document.getElementById('hint-box').classList.remove('hidden');
+            document.getElementById('btn-show-hint').classList.add('hidden');
+        }
+
+        // 정답 제출 처리
+        answerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const val = answerInput.value;
+            if(!val.trim()) return;
+
+            const normalizedInput = normalize(val);
+            const isCorrect = stages[currentStage].answers.some(ans => normalize(ans) === normalizedInput);
+
+            if(isCorrect) {
+                // 정답!
+                errorMsg.classList.add('hidden');
+                answerInput.classList.remove('shake-animation');
+                
+                if(currentStage === stages.length - 1) {
+                    // 클리어!
+                    screenGame.classList.add('hidden');
+                    btnOpenDict.classList.add('hidden');
+                    screenOutro.classList.remove('hidden');
+                } else {
+                    // 다음 스테이지로
+                    currentStage++;
+                    loadStage();
+                }
+            } else {
+                // 오답!
+                errorMsg.classList.remove('hidden');
+                
+                // 쉐이크 애니메이션 재시작을 위한 꼼수
+                answerInput.classList.remove('shake-animation');
+                void answerInput.offsetWidth; // 리플로우 강제 발생
+                answerInput.classList.add('shake-animation');
+            }
+        });
+
+        // 사전 모달 토글
+        function toggleDict() {
+            dictModal.classList.toggle('hidden');
+        }
+        btnOpenDict.addEventListener('click', toggleDict);
+
+        // 다시 하기
+        function resetGame() {
+            screenOutro.classList.add('hidden');
+            startGame();
+        }
+
+        // 초기 설정 실행
+        renderDictionary();
+    </script>
+</body>
+</html>
